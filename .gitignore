@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data / artifacts
+data/ml-*/
+artifacts/*.pkl
+artifacts/*.joblib
+artifacts/*.json
+artifacts/*.npy
+artifacts/*.npz
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
