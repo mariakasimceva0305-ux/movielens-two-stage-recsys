@@ -102,4 +102,5 @@ def recommend_for_user(bundle: InferenceBundle, user_id: int, k: int = 10) -> Li
                 "score": float(row["rank_score"]),
             }
         )
+    results.sort(key=lambda r: r["score"], reverse=True)
     return results

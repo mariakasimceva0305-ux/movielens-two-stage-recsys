@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Dict, Iterable, List, Sequence
 
 import numpy as np
@@ -72,3 +75,41 @@ def build_predictions_from_ranked_items(
         for rank, movie_id in enumerate(items, start=1):
             rows.append({"userId": user_id, "movieId": movie_id, score_col: float(-rank)})
     return pd.DataFrame(rows)
+
+
+def persist_offline_run_artifacts(
+    report: dict,
+    artifacts_dir: Path,
+    *,
+    data_dir: str | None = None,
+) -> Path:
+    """Сохраняет копию отчёта о метриках в artifacts/runs/<run_id>/."""
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    run_dir = Path(artifacts_dir) / "runs" / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    payload = dict(report)
+    payload["run_id"] = run_id
+    if data_dir is not None:
+        payload["data_dir"] = data_dir
+    (run_dir / "metrics.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    k = report.get("k", "?")
+    lines = [
+        f"# Offline metrics (k={k})",
+        "",
+        f"run_id: {run_id}",
+        "",
+    ]
+    for name, m in report.items():
+        if name in ("k", "run_id") or not isinstance(m, dict):
+            continue
+        lines.append(f"## {name}")
+        for metric_name, metric_value in m.items():
+            lines.append(f"- {metric_name}: {metric_value:.6f}")
+        lines.append("")
+    (run_dir / "metrics.md").write_text("\n".join(lines), encoding="utf-8")
+    Path(artifacts_dir).mkdir(parents=True, exist_ok=True)
+    (Path(artifacts_dir) / "latest_run.txt").write_text(run_id + "\n", encoding="utf-8")
+    return run_dir

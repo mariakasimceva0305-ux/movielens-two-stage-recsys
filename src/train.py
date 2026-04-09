@@ -14,7 +14,7 @@ from src.candidate_generation import (
 )
 from src.config import ArtifactConfig, CandidateConfig, DataConfig, RankingConfig, SplitConfig
 from src.data import build_eda_summary, convert_to_implicit, filter_active_users, load_movielens, time_based_split
-from src.evaluate import build_predictions_from_ranked_items, evaluate_topk
+from src.evaluate import build_predictions_from_ranked_items, evaluate_topk, persist_offline_run_artifacts
 from src.features import build_ranking_dataset
 from src.ranking import score_candidates, train_ranker
 
@@ -154,6 +154,12 @@ def main() -> None:
     joblib.dump(movies, artifact_config.artifacts_dir / "movies_df.joblib")
     with open(artifact_config.artifacts_dir / "metrics.json", "w", encoding="utf-8") as f:
         json.dump(metrics_report, f, ensure_ascii=False, indent=2)
+
+    persist_offline_run_artifacts(
+        metrics_report,
+        artifact_config.artifacts_dir,
+        data_dir=str(args.data_dir),
+    )
 
     print(f"\nArtifacts saved to: {artifact_config.artifacts_dir}")
 
