@@ -1,119 +1,221 @@
 # MovieLens Two-Stage Recommender System
 
-Production-minded educational implementation of a **two-stage recommendation pipeline** built on MovieLens data. The project separates candidate generation and ranking, evaluates recommendation quality with top-K metrics, and exposes inference through a FastAPI service.
+Практическая двухэтапная рекомендательная система на MovieLens: candidate generation + ranking + offline evaluation + API layer.
 
-## Why This Project
-A single-stage recommender is often too limited when you need both **retrieval efficiency** and **top-K relevance**. This repository demonstrates a common industry pattern:
-1. generate a compact candidate set fast;
-2. apply a richer ranker on top;
-3. validate improvements with offline metrics before serving recommendations.
+Цель проекта — показать, как из базового retrieval-подхода перейти к более реалистичной рекомендательной системе, где важны не только релевантность, но и скорость выдачи, воспроизводимость экспериментов и готовность к сервисной упаковке.
 
-## Problem Statement
-Given user-item interaction history, generate a ranked list of relevant movies for a target user.
+---
 
-## Objectives
-- implement a **two-stage recommender**
-- keep training, feature engineering, inference, and evaluation modular
-- compare recommendation quality using **offline ranking metrics**
-- package the inference layer as a lightweight API
+## Что делает проект
 
-## Project Scope
-This repository is intended as a compact reference implementation of:
-- candidate generation
-- ranking
-- offline evaluation
-- service packaging
-- reproducible local execution
+Система строит персональные рекомендации фильмов в two-stage архитектуре:
 
-## Architecture
+1. **Candidate Generation** — быстро отбирает ограниченный пул релевантных кандидатов.
+2. **Ranking** — переупорядочивает кандидатов с использованием дополнительных признаков.
+3. **Offline Evaluation** — оценивает качество рекомендаций по ранжирующим метрикам.
+4. **Serving Layer** — отдает рекомендации через API.
 
-### Stage 1 — Candidate Generation
-Generate a manageable candidate pool for each user using historical interactions and retrieval-style logic.
+Такой подход ближе к production-сценариям, чем одношаговая выдача, потому что позволяет балансировать качество, latency и сложность модели.
 
-### Stage 2 — Ranking
-Re-score candidate items with a ranking model using engineered user-item features.
+---
 
-### Serving Layer
-Return ranked recommendations via FastAPI.
+## Задача
 
-## Repository Structure
+Построить рекомендательную систему, которая:
+
+- формирует персонализированный shortlist фильмов для пользователя;
+- улучшает top-K качество по сравнению с более простыми retrieval/baseline-подходами;
+- поддерживает воспроизводимую offline-оценку;
+- может быть упакована в API для дальнейшей интеграции.
+
+Проект использует датасет **MovieLens** как воспроизводимую среду для прототипирования recsys-пайплайна.
+
+---
+
+## Метрики
+
+Для оценки качества используются стандартные ranking-метрики:
+
+- **Precision@K** — насколько точны рекомендации в top-K;
+- **Recall@K** — насколько полно система покрывает релевантные объекты;
+- **MAP@K** — учитывает порядок релевантных объектов в выдаче;
+- **NDCG@K** — оценивает качество ранжирования с учетом позиции;
+- **Latency** — важна для practical serving-сценариев.
+
+В этом проекте основной акцент сделан не на одной “магической” метрике, а на балансе между качеством top-K и вычислительной стоимостью пайплайна.
+
+---
+
+## Архитектура
+
 ```text
-app/
-  main.py                 # FastAPI entrypoint
-src/
-  candidate_generation.py # candidate generation logic
-  config.py               # configuration
-  data.py                 # data loading / preparation
-  evaluate.py             # offline metrics
-  features.py             # feature engineering
-  inference.py            # recommendation inference
-  ranking.py              # ranking logic
-  train.py                # training pipeline
-artifacts/                # trained artifacts / intermediate outputs
-notebooks/                # exploratory analysis
-Dockerfile
-requirements.txt
-README.md
+История взаимодействий пользователей с фильмами
+                │
+                ▼
+      ┌───────────────────────────────┐
+      │   Candidate Generation        │
+      │   - retrieval baseline        │
+      │   - shortlist of items        │
+      └───────────────────────────────┘
+                │
+                ▼
+      ┌───────────────────────────────┐
+      │   Feature Engineering         │
+      │   - user/item features        │
+      │   - interaction features      │
+      └───────────────────────────────┘
+                │
+                ▼
+      ┌───────────────────────────────┐
+      │   Ranking Model               │
+      │   - learns item ordering      │
+      │   - re-scores candidates      │
+      └───────────────────────────────┘
+                │
+                ▼
+      ┌───────────────────────────────┐
+      │   Offline Evaluation          │
+      │   Precision@K / Recall@K      │
+      │   MAP@K / NDCG@K / Latency    │
+      └───────────────────────────────┘
+                │
+                ▼
+      ┌───────────────────────────────┐
+      │   API / Serving Layer         │
+      │   recommendation endpoint     │
+      └───────────────────────────────┘
 ```
 
-## ML Approach
-### Candidate Generation
-The first stage narrows the search space and keeps inference tractable.
+---
 
-### Ranking
-The second stage reorders candidates using richer features than the retrieval layer can typically afford.
+## Структура репозитория
 
-### Why Two-Stage
-A two-stage setup is a practical trade-off between:
-- **latency**
-- **coverage**
-- **quality of the final top-K list**
+```text
+├── app/                # API-слой для выдачи рекомендаций
+├── artifacts/          # обученные артефакты и сохраненные результаты
+├── data/               # данные / промежуточные таблицы
+├── notebooks/          # исследовательские ноутбуки
+├── src/
+│   ├── candidate_generation.py
+│   ├── evaluate.py
+│   ├── features.py
+│   ├── ranking.py
+│   ├── train.py
+│   └── ...
+├── Dockerfile
+├── requirements.txt
+└── README.md
+```
 
-## Evaluation
-The project tracks standard ranking metrics:
-- `Precision@K`
-- `Recall@K`
-- `MAP@K`
-- `NDCG@K`
-- latency of the recommendation path
+---
 
-These metrics are useful because they separate:
-- retrieval coverage,
-- top-K ordering quality,
-- and serving practicality.
+## Основные идеи решения
 
-## What This Repository Demonstrates
-- modular recommender code instead of a single notebook-only workflow
-- explicit split between training and inference
-- ability to expose ranking results through an API
-- engineering-friendly layout for future iteration
+### 1. Разделение retrieval и ranking
 
-## Running Locally
+Двухэтапная архитектура позволяет не ранжировать весь каталог тяжелой моделью. Сначала система быстро сужает пространство кандидатов, а затем применяет ranking только к shortlist. Это делает подход вычислительно разумным и ближе к реальным recommender pipelines.
+
+### 2. Явная offline-валидация
+
+Оценка через `Precision@K`, `Recall@K`, `MAP@K`, `NDCG@K` позволяет безопасно сравнивать итерации модели до интеграции в онлайн-контур.
+
+### 3. Сервисная упаковка
+
+Проект не ограничивается ноутбуком: рекомендации можно отдавать через API, что важно для демонстрации end-to-end ML system design.
+
+---
+
+## Почему two-stage, а не single-stage
+
+Одношаговый подход проще, но хуже масштабируется при росте числа объектов. Two-stage схема дает несколько преимуществ:
+
+- ускоряет инференс за счет shortlist кандидатов;
+- позволяет разделять retrieval и ranking логику;
+- упрощает контроль trade-off между качеством и скоростью;
+- ближе к архитектуре реальных recommender systems.
+
+---
+
+## Как запустить
+
+### 1. Установка зависимостей
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Linux / macOS
 pip install -r requirements.txt
-python -m src.train
-uvicorn app.main:app --reload
 ```
 
-## Example API Use
+### 2. Обучение пайплайна
+
 ```bash
-curl -X GET "http://127.0.0.1:8000/recommend?user_id=1&k=10"
+python src/train.py
 ```
 
-## Suggested Improvements
-- add explicit train / validation / test split documentation
-- log metric values for baseline vs ranker in a dedicated results table
-- add feature importance or error analysis summary
-- support approximate nearest neighbor retrieval for larger candidate pools
-- add experiment tracking for repeatable comparison runs
+### 3. Offline evaluation
 
-## Limitations
-- MovieLens is a benchmark dataset, not a production catalog
-- offline gains do not automatically translate to online business lift
-- cold-start handling is outside the current scope
-- candidate generation strategy can be extended further for scale
+```bash
+python src/evaluate.py
+```
 
-## Takeaway
-This project is best read as a compact demonstration of how to structure a recommender system repo when the goal is not just to train a model, but to **evaluate it, package it, and make the system legible to another engineer**.
+### 4. Запуск API
+
+```bash
+python app/main.py
+```
+
+Если в репозитории используется Docker:
+
+```bash
+docker build -t movielens-recsys .
+docker run -p 8000:8000 movielens-recsys
+```
+
+---
+
+## Что важно на интервью по этому проекту
+
+При защите проекта стоит уметь объяснить:
+
+- как именно устроен candidate generation;
+- какие признаки используются на ranking stage;
+- какой baseline использовался для сравнения;
+- почему выбраны именно эти метрики;
+- как контролируется leakage между train/validation;
+- почему offline quality не гарантирует online uplift;
+- какие bottlenecks появляются при росте каталога.
+
+---
+
+## Ограничения
+
+- Проект использует **MovieLens**, а не реальные продуктовые логи; поэтому выводы ограничены учебным датасетом.
+- Offline-метрики не заменяют online evaluation.
+- Без richer user/item/context features потенциал ranking stage ограничен.
+- Архитектура демонстрирует production-подход, но не претендует на полноту industrial recommender stack.
+
+---
+
+## Что можно улучшить дальше
+
+- добавить более строгие baselines и ablation study;
+- расширить feature engineering;
+- добавить temporal split и более реалистичную схему валидации;
+- внедрить implicit feedback-aware ranking;
+- добавить мониторинг latency и batch/online inference сценарии;
+- расширить API до полноценного inference service.
+
+---
+
+## Технологии
+
+- Python
+- Pandas / NumPy
+- scikit-learn
+- FastAPI
+- Docker
+- Ranking / Recommender Systems
+
+---
+
+## Итог
+
+Этот проект показывает базовую, но уже инженерно осмысленную траекторию построения recommender system: от candidate generation и ranking до оценки качества и сервисной упаковки. Он полезен как demonstrator applied ML-подхода к рекомендациям и как foundation для более production-like recsys-систем.
