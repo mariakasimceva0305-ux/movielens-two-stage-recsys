@@ -1,26 +1,21 @@
-# movielens-two-stage-recsys
+# MovieLens Two-Stage Recommender System
 
-Educational two-stage recommendation system on MovieLens data.
+[Русская версия](#ru) | [English version](#en)
 
-## Project Scope
+## RU
 
-Recommendation pipeline with candidate generation, ranking, evaluation, and API serving.
+### TL;DR
+Двухэтапная рекомендательная система на MovieLens: candidate generation + ranking + offline evaluation + API.
 
-## Repository Structure
+### Гипотезы
+1. Two-stage архитектура лучше по latency/quality.
+2. Ranker улучшает релевантность top-K.
+3. Offline-валидация ускоряет безопасные итерации.
 
-- `src/data.py`
-- `src/candidate_generation.py`
-- `src/features.py`
-- `src/ranking.py`
-- `src/train.py`
-- `src/evaluate.py`
-- `src/inference.py`
-- `app/main.py`
-- `Dockerfile`
+### Метрики
+`Precision@K`, `Recall@K`, `MAP@K`, `NDCG@K`, latency.
 
-## Implemented Functionality
+## EN
 
-- candidate generation
-- ranking stage over generated candidates
-- offline evaluation routines
-- API entrypoint for recommendation requests
+### Overview
+An educational two-stage recommender on MovieLens with candidate generation, ranking, and offline evaluation.
