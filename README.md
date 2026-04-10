@@ -76,8 +76,8 @@
 Артефакты того же прогона:
 
 - `artifacts/metrics.json` — сводка метрик;
-- `artifacts/latest_run.txt` — идентификатор последнего сохранённого прогона;
-- `artifacts/runs/<run_id>/metrics.json`, `metrics.md` — копия с меткой времени и каталогом данных.
+- `artifacts/latest_run.txt` — одна строка: актуальный `run_id` (после локального `train.py` перезаписывается);
+- `artifacts/runs/<run_id>/metrics.json` и `artifacts/runs/<run_id>/metrics.md` — копия отчёта с меткой времени (подставьте `run_id` из `latest_run.txt`; в закоммиченном примере это `20260409T233731Z`).
 
 ## Запуск
 
