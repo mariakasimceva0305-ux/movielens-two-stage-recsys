@@ -14,6 +14,7 @@ data/ml-*/
 artifacts/*.pkl
 artifacts/*.joblib
 artifacts/*.json
+!artifacts/metrics.json
 artifacts/*.npy
 artifacts/*.npz
 

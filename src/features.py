@@ -94,6 +94,10 @@ def build_ranking_dataset(
     genre_map["genres"] = genre_map["genres"].fillna("(no genres listed)").str.split("|")
     genre_map = genre_map.explode("genres")
 
+    # `item_features` уже несёт строку `genres` (все жанры через |); для join с affinity нужен один жанр на строку.
+    if "genres" in dataset.columns:
+        dataset = dataset.drop(columns=["genres"])
+
     dataset = dataset.merge(genre_map, on="movieId", how="left")
     dataset = dataset.merge(user_genre_affinity, on=["userId", "genres"], how="left")
     dataset["user_genre_affinity"] = dataset["user_genre_affinity"].fillna(0.0)

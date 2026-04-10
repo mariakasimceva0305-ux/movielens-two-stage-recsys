@@ -38,52 +38,62 @@
 
 ## Структура репозитория
 
-- `src/train.py` — обучение компонентов системы;
+- `src/train.py` — обучение компонентов системы и расчёт offline-метрик;
 - `src/candidate_generation.py` — логика отбора кандидатов;
 - `src/features.py` — подготовка признаков;
 - `src/ranking.py` — переранжирование;
-- `src/evaluate.py` — расчёт метрик качества;
+- `src/evaluate.py` — функции метрик и сохранение артефактов прогона (не отдельный CLI);
 - `app/main.py` — API для выдачи рекомендаций;
 - `artifacts/` — артефакты обучения и оценки;
 - `notebooks/` — исследовательские проверки.
 
 ## Оценка качества
 
-Основные метрики:
+В offline-отчёте после `train.py` для выбранного `k` (параметр `--k-metrics`):
 
-- `Precision@K`
-- `Recall@K`
-- `MAP@K`
-- `NDCG@K`
-- задержка ответа
+- `recall@k`
+- `map@k`
+- `ndcg@k`
 
-Сравнение:
+Сравнение контуров в одном прогоне:
 
-- отбор кандидатов без отдельного переранжирования;
-- полный двухэтапный контур.
+- `popularity` — только популярность;
+- `item_item` — кандидаты item–item;
+- `two_stage` — полный контур с переранжированием.
 
 ## Результаты
 
-Численные метрики зависят от выбранного снимка MovieLens. После `python src/train.py --data-dir <каталог_с_ratings.csv_и_movies.csv>` смотрите:
+Ниже — фактический прогон `python src/train.py --data-dir data/ml-latest-small --artifacts-dir artifacts --k-metrics 10` на снимке **MovieLens ml-latest-small** (см. также закоммиченный `artifacts/metrics.json`).
 
-- корневой `metrics.json` (сводка последнего обучения);
-- `artifacts/runs/<run_id>/metrics.json` и `metrics.md` — копия отчёта с временной меткой;
-- `artifacts/latest_run.txt` — идентификатор последнего сохранённого прогона.
+| Контур | recall@10 | map@10 | ndcg@10 |
+|--------|-----------|--------|---------|
+| popularity | 0.0641 | 0.1910 | 0.2939 |
+| item_item | 0.0035 | 0.0046 | 0.0204 |
+| two_stage | 0.0745 | 0.2272 | 0.3218 |
 
-Блоки `item_item`, `popularity` и `two_stage` в этом JSON относятся к одному прогону на выбранном снимке данных и позволяют сравнить контуры между собой.
+На этом снимке двухэтапный контур даёт более высокие `recall@k`, `map@k` и `ndcg@k`, чем отдельно popularity и отдельно item–item.
+
+Артефакты того же прогона:
+
+- `artifacts/metrics.json` — сводка метрик;
+- `artifacts/latest_run.txt` — идентификатор последнего сохранённого прогона;
+- `artifacts/runs/<run_id>/metrics.json`, `metrics.md` — копия с меткой времени и каталогом данных.
 
 ## Запуск
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
 
-python src/train.py --data-dir <путь_к_данным_MovieLens>
-python src/evaluate.py --data-dir <путь_к_данным_MovieLens>
+# обучение, сохранение моделей в artifacts/ и расчёт метрик (пример пути к данным Grouplens)
+python src/train.py --data-dir data/ml-latest-small --artifacts-dir artifacts --k-metrics 10
 
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
+
+Каталог с `ratings.csv` и `movies.csv` задаётся через `--data-dir`. Для воспроизведения таблицы выше можно скачать [ml-latest-small](https://grouplens.org/datasets/movielens/) в `data/ml-latest-small/`.
 
 ## Ограничения
 
