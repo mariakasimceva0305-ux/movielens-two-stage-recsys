@@ -11,6 +11,8 @@ venv/
 
 # Data / artifacts
 data/ml-*/
+data/*.zip
+catboost_info/
 artifacts/*.pkl
 artifacts/*.joblib
 artifacts/*.json
