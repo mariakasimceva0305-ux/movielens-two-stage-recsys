@@ -43,3 +43,23 @@ def test_persist_offline_run_artifacts(tmp_path: Path) -> None:
     data = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
     assert data["run_id"]
     assert (tmp_path / "latest_run.txt").read_text(encoding="utf-8").strip() == data["run_id"]
+
+
+def test_missing_recommendations_count_as_zero():
+    pred = pd.DataFrame({"userId": [1], "movieId": [10], "rank_score": [1.]})
+    gt = pd.DataFrame({"userId": [1, 2], "movieId": [10, 20]})
+    m = evaluate_topk(pred, gt)
+    assert m["ndcg@k"] == .5 and m["recall@k"] == .5
+    assert m["evaluated_users"] == 2 and m["user_coverage"] == .5
+
+
+def test_empty_predictions_still_evaluate_all_users():
+    gt = pd.DataFrame({"userId": [1], "movieId": [10]})
+    assert evaluate_topk(pd.DataFrame(), gt)["ndcg@k"] == 0
+
+
+def test_duplicate_items_cannot_inflate_ndcg():
+    assert ndcg_at_k([10], [10, 10], 2) == 1.
+    pred = pd.DataFrame({"userId": [1,1], "movieId": [10,10], "rank_score": [2.,1.]})
+    gt = pd.DataFrame({"userId": [1], "movieId": [10]})
+    assert evaluate_topk(pred, gt)["ndcg@k"] == 1.

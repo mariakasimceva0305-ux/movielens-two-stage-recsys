@@ -63,12 +63,12 @@
 
 ## Результаты
 
-Ниже — фактический прогон `python src/train.py --data-dir data/ml-latest-small --artifacts-dir artifacts --k-metrics 10` на снимке **MovieLens ml-latest-small** (см. также закоммиченный `artifacts/metrics.json`).
+Ниже — фактический прогон `python -m src.train --data-dir data/ml-latest-small --artifacts-dir artifacts --k-metrics 10` на снимке **MovieLens ml-latest-small** (проверенный повторный запуск: `artifacts/verified_20261010/metrics.json`).
 
 | Контур | recall@10 | map@10 | ndcg@10 |
 |--------|-----------|--------|---------|
 | popularity | 0.0641 | 0.1910 | 0.2939 |
-| item_item | 0.0035 | 0.0046 | 0.0204 |
+| item_item | 0.0003 | 0.0004 | 0.0016 |
 | two_stage | 0.0745 | 0.2272 | 0.3218 |
 
 На этом снимке двухэтапный контур даёт более высокие `recall@k`, `map@k` и `ndcg@k`, чем отдельно popularity и отдельно item–item.
@@ -88,7 +88,7 @@ python -m venv .venv
 pip install -r requirements.txt
 
 # обучение, сохранение моделей в artifacts/ и расчёт метрик (пример пути к данным Grouplens)
-python src/train.py --data-dir data/ml-latest-small --artifacts-dir artifacts --k-metrics 10
+python -m src.train --data-dir data/ml-latest-small --artifacts-dir artifacts --k-metrics 10
 
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
@@ -100,3 +100,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 - метрики по историческим данным не заменяют проверку на реальном трафике;
 - качество зависит от полноты истории взаимодействий и состава признаков;
 - для устойчивого сравнения сохраняют результаты по нескольким вариантам моделей переранжирования.
+
+
+## Единая оценочная выборка
+
+Все методы оцениваются на 101 test-пользователе; отсутствие рекомендаций даёт нулевой вклад. Покрытие popularity и two-stage — 100%, item–item — 7,92%. Повторяющиеся items не увеличивают NDCG. Это одно глобальное временное разбиение; фильтр активности определяет когорту по всей истории, поэтому результат не является оценкой будущего продуктового трафика.

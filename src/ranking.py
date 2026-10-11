@@ -59,6 +59,7 @@ def train_ranker(train_candidates: pd.DataFrame, val_candidates: pd.DataFrame, c
         eval_metric="NDCG",
         random_seed=config.random_seed,
         verbose=50,
+        thread_count=4,
     )
     model.fit(train_pool, eval_set=val_pool, use_best_model=True)
     return RankerArtifacts(model=model, feature_columns=FEATURE_COLUMNS)

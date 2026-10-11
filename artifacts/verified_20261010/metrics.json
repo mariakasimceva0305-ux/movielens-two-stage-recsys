@@ -1,0 +1,24 @@
+{
+  "k": 10,
+  "popularity": {
+    "recall@k": 0.06410782920140884,
+    "map@k": 0.19099324218136102,
+    "ndcg@k": 0.293936429868008,
+    "evaluated_users": 101,
+    "user_coverage": 1.0
+  },
+  "item_item": {
+    "recall@k": 0.0002735998790718766,
+    "map@k": 0.00036303630363036305,
+    "ndcg@k": 0.0016192216497059042,
+    "evaluated_users": 101,
+    "user_coverage": 0.07920792079207921
+  },
+  "two_stage": {
+    "recall@k": 0.07451543854706102,
+    "map@k": 0.22717153858242964,
+    "ndcg@k": 0.3217944942029198,
+    "evaluated_users": 101,
+    "user_coverage": 1.0
+  }
+}

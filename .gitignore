@@ -24,3 +24,7 @@ artifacts/*.npz
 .DS_Store
 .idea/
 .vscode/
+
+artifacts/**/*.joblib
+__pycache__/
+.pytest_cache/
